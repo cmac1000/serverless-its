@@ -1,7 +1,7 @@
 """
 Script to validate images being submitted for transformation.
 """
-
+import operator
 from .loaders import BaseLoader
 from .errors import ITSLoaderError, ConfigError
 from . import settings

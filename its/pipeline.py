@@ -14,24 +14,27 @@ def process_transforms(img, query, *args):
     Return URI to transformed image.
     """
     transform_classes = BaseTransform.__subclasses__()
+
     if not isinstance(img, BytesIO):
         img_info = img.info
-        transform_order = {"resize": None, "fit": None, "overlay": None}
+        transform_order = ["fit", "overlay", "resize"]
 
         # check if a similar transform on the same image is already in cache
 
         if len(query) == 0:  # no transforms; return image as is
             return img
 
-        # assign each subclass to it's slug in the order dict
-        for tclass in transform_classes:
-            transform_order[tclass.slug] = tclass
+        num_subclasses = len(transform_classes)
+        # sort the transform classes into the right order
+        transform_classes.sort(key= lambda x: transform_order.index(x.slug)
+            if x.slug in transform_order
+            else num_subclasses)
 
         # loop through the order dict and apply the transforms
-        for transform in transform_order:
-            if transform in query:
-                query[transform] = query[transform].split('x')
-                img = transform_order[transform].apply_transform(img, query[transform])
+        for tclass in transform_classes:
+            if tclass.slug in query:
+                query[tclass.slug] = query[tclass.slug].split('x')
+                img = tclass.apply_transform(img, query[tclass.slug])
 
         if img.format is None and 'filename' in img_info.keys():
             # attempt to grab the filetype from the filename
