@@ -20,50 +20,55 @@ def optimize(img, query):
         except ValueError as e:
             raise ITSTransformError("ITSTransform Error: " + str(e))
 
+        if ext.lower() == "jpg":
+            ext = "jpeg"
+
+        # convert first, then optimize
+        if ext.lower() == "jpeg":
+            # convert to JPG and/or compress
+            # need to convert to RGB first, then can save in any format
+            if img.format != "JPEG":
+                if img.mode in ["RGBA", "LA"]:
+                    new_img = Image.new("RGBA", img.size)
+                    new_img = Image.alpha_composite(new_img, img)
+                img = img.convert("RGB")
+            img = optimize_jpg(img, quality)
+        elif ext.lower() != img.format.lower() and ext.lower() != "jpeg":
+            # convert if not the same format
+            # convert from PNG, JPG and WEBP to formats other than JPG
+            img = convert(img, ext)
+
         with tempfile.NamedTemporaryFile(dir="/tmp/", delete=True) as tmp_file:
-            if ext.lower() == "jpg":
-                ext = "jpeg"
-
-            # convert first, then optimize
-            if ext.lower() == "jpeg":
-                # convert to JPG and/or compress
-                # need to convert to RGB first, then can save in any format
-                if img.format != "JPEG":
-                    if img.mode in ["RGBA", "LA"]:
-                        new_img = Image.new("RGBA", img.size)
-                        new_img = Image.alpha_composite(new_img, img)
-                    img = img.convert("RGB")
-                img = optimize_jpg(img, tmp_file, quality)
-            elif ext.lower():
-                # convert from PNG, JPG and WEBP to formats other than JPG
-                img = convert(img, ext, tmp_file)
-
             # only optimize pngs if quality param is provided
             if img.format == "PNG" and quality is not None:
                 img = optimize_png(img, tmp_file, quality)
 
+
     return img
 
 
-def convert(img, ext, tmp_file):
-    if ext.lower() != img.format.lower():  # same format so do nothing
-        if img.format.lower() in ["png", "webp", "jpeg"]:
-            img.save(tmp_file.name, ext.upper())
-            # reopen newly converted or compressed image
-            img = Image.open(tmp_file.name)
+def convert(img, ext):
+    
+    if img.format.lower() in ["png", "webp", "jpeg"]:
+        img_bytes = BytesIO()
+        img.save(img_bytes, ext.upper(), optimize=True)
+        # reopen newly converted or compressed image
+        img = Image.open(img_bytes)
     return img
 
 
-def optimize_jpg(img, tmp_file, quality=None):
+def optimize_jpg(img, quality=None):
+    img_bytes = BytesIO()
+
     if quality is not None and quality <= 95:
-        img.save(tmp_file.name, "JPEG", quality=quality, optimize=True, progressive=True)
+        img.save(img_bytes, "JPEG", quality=quality, optimize=True, progressive=True)
     else:
         # 95 is the reccommended upper limit on quality for JPEGs in PIL
         img.save(
-            tmp_file.name, "JPEG", quality=DEFAULT_JPEG_QUALITY,
+            img_bytes, "JPEG", quality=DEFAULT_JPEG_QUALITY,
             optimize=True, progressive=True)
     # reopen newly converted or compressed image
-    img = Image.open(tmp_file.name)
+    img = Image.open(img_bytes)
 
     return img
 
