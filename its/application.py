@@ -13,7 +13,7 @@ app = Flask(__name__)
 
 def process_request(namespace, query, filename):
     
-    disable_optimize = True
+    disable_optimize = False
     
     try:
         image = loader(namespace, filename)
