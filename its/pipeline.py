@@ -21,9 +21,6 @@ def process_transforms(img, query, *args):
 
         # check if a similar transform on the same image is already in cache
 
-        if len(query) == 0:  # no transforms; return image as is
-            return img
-
         num_subclasses = len(transform_classes)
         # sort the transform classes into the right order
         transform_classes.sort(key= lambda x: transform_order.index(x.slug)

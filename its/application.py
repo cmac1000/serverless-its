@@ -30,8 +30,9 @@ def process_request(namespace, query, filename):
         mime_type = MIME_TYPES["SVG"]
     else:
         image.info['filename'] = filename
-        print(query)
-        result = process_transforms(image, query)
+
+        if len(query) > 0:
+            result = process_transforms(image, query)
 
         # image conversion and compression
         # cache result
