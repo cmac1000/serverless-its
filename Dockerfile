@@ -1,17 +1,55 @@
-FROM python:3.6.5
+FROM python:3.6.5-alpine3.7 as builder
 
 ENV PYTHONUNBUFFERED 1
+
 WORKDIR /opt/its
 
-# https://pngquant.org/install.html
-RUN cd $(mktemp -d) \
-  && git clone --recursive https://github.com/kornelski/pngquant.git \
-  && cd pngquant \
-  && make install
+# install necessary libraries
+RUN apk add --no-cache \
+  bash \
+  ca-certificates \
+  cyrus-sasl-dev \
+  g++ \
+  gcc \
+  jpeg-dev \
+  libffi-dev \
+  libmemcached-dev \
+  libxslt-dev \
+  linux-headers \
+  make \
+  memcached \
+  openssl \
+  openssl-dev \
+  pngquant \
+  py-lxml \
+  zlib-dev \
+  python3-dev
 
-RUN pip install pipenv
-RUN pipenv --three
+RUN apk add --no-cache bash \
+  && mkdir -p /home/its \
+  && rm /bin/sh \
+  && ln -s /bin/bash /bin/sh
+
+# create its user and group
+RUN mkdir -p /opt/its \
+  && mkdir -p /etc/its \
+  && addgroup its \
+  && adduser -D -u 1000 -G its its \
+  && chown --recursive its:its /etc/its \
+  && chown --recursive its:its /home/its \
+  && chown --recursive its:its /opt/its
+
+USER its
+
+ENV PATH /home/its/.local/bin:$PATH
+
+# install runtime requirements
+RUN pip install --user pipenv \
+  && pipenv --three
+
 COPY Pipfile Pipfile.lock /opt/its/
+
 RUN pipenv install --dev
-COPY tox.ini /opt/its/
-COPY its/ /opt/its/
+
+# copy source code
+COPY --chown=its:its its/ /opt/its/
