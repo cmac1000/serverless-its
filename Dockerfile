@@ -6,33 +6,31 @@ WORKDIR /opt/its
 
 # install necessary libraries
 RUN apk add --no-cache \
-  bash \
-  ca-certificates \
-  cyrus-sasl-dev \
-  g++ \
-  gcc \
-  jpeg-dev \
-  libffi-dev \
-  libmemcached-dev \
-  libxslt-dev \
-  linux-headers \
-  make \
-  memcached \
-  openssl \
-  openssl-dev \
-  pngquant \
-  py-lxml \
-  zlib-dev \
-  python3-dev
-
-RUN apk add --no-cache bash \
-  && mkdir -p /home/its \
+    bash \
+    ca-certificates \
+    cyrus-sasl-dev \
+    g++ \
+    gcc \
+    jpeg-dev \
+    libffi-dev \
+    libmemcached-dev \
+    libxslt-dev \
+    linux-headers \
+    make \
+    memcached \
+    openssl \
+    openssl-dev \
+    pngquant \
+    py-lxml \
+    zlib-dev \
+    python3-dev \
   && rm /bin/sh \
   && ln -s /bin/bash /bin/sh
 
 # create its user and group
 RUN mkdir -p /opt/its \
   && mkdir -p /etc/its \
+  && mkdir -p /home/its \
   && addgroup its \
   && adduser -D -u 1000 -G its its \
   && chown --recursive its:its /etc/its \
